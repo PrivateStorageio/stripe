@@ -1906,7 +1906,7 @@ instance FromJSON Event where
         _        -> pure UnknownEventData
      eventObject <- o .: "object"
      eventPendingWebHooks <- o .: "pending_webhooks"
-     eventRequest <- Request <$> o .:? "request"
+     eventRequest <- o .: "request"
      return Event {..}
    parseJSON _ = mzero
 
