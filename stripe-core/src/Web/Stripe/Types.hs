@@ -1814,6 +1814,20 @@ data EventData =
   | Ping
   deriving (Read, Show, Eq, Ord, Data, Typeable)
 
+
+data Request = Request {
+      requestId              :: Text
+    , requestIdempotencyKey  :: Text
+} deriving (Read, Show, Eq, Ord, Data, Typeable)
+
+instance FromJSON Request where
+  parseJSON (Object o) = do
+    requestId <- o .: "id"
+    requestIdempotencyKey <- o .: "idempotency_key"
+    return Request{..}
+
+  parseJSON _ = mempty
+
 ------------------------------------------------------------------------------
 -- | `Event` Object
 data Event = Event {
@@ -1824,7 +1838,7 @@ data Event = Event {
     , eventData            :: EventData
     , eventObject          :: Text
     , eventPendingWebHooks :: Int
-    , eventRequest         :: Maybe Text
+    , eventRequest         :: Maybe Request
 } deriving (Read, Show, Eq, Ord, Data, Typeable)
 
 ------------------------------------------------------------------------------
@@ -1892,7 +1906,7 @@ instance FromJSON Event where
         _        -> pure UnknownEventData
      eventObject <- o .: "object"
      eventPendingWebHooks <- o .: "pending_webhooks"
-     eventRequest <- o .:? "request"
+     eventRequest <- Request <$> o .:? "request"
      return Event {..}
    parseJSON _ = mzero
 
