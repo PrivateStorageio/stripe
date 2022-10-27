@@ -164,6 +164,7 @@ instance FromJSON CheckoutSession where
   parseJSON (Object o) =
     CheckoutSession <$> o .: "id"
                     <*> o .: "client_reference_id"
+  parseJSON _ = mempty
 
 ------------------------------------------------------------------------------
 -- | `Charge` object in `Stripe` API
