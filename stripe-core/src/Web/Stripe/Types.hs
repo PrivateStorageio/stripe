@@ -156,14 +156,14 @@ instance FromJSON CheckoutSessionId where
   parseJSON _ = mzero
 
 data CheckoutSession = CheckoutSession {
-    checkoutSessionId                :: CheckoutSessionId
+    checkoutSessionId                :: Maybe CheckoutSessionId
   , checkoutSessionClientReferenceId :: Maybe Text
   } deriving (Read, Show, Eq, Ord, Data, Typeable)
 
 instance FromJSON CheckoutSession where
   parseJSON (Object o) =
-    CheckoutSession <$> o .: "id"
-                    <*> o .: "client_reference_id"
+    CheckoutSession <$> o .:? "id"
+                    <*> o .:? "client_reference_id"
   parseJSON _ = mempty
 
 ------------------------------------------------------------------------------
@@ -1863,14 +1863,14 @@ data EventData =
 
 
 data Request = Request {
-      requestId              :: Text
-    , requestIdempotencyKey  :: Text
+      requestId              :: Maybe Text
+    , requestIdempotencyKey  :: Maybe Text
 } deriving (Read, Show, Eq, Ord, Data, Typeable)
 
 instance FromJSON Request where
   parseJSON (Object o) = do
-    requestId <- o .: "id"
-    requestIdempotencyKey <- o .: "idempotency_key"
+    requestId <- o .:? "id"
+    requestIdempotencyKey <- o .:? "idempotency_key"
     return Request{..}
 
   parseJSON _ = mempty
