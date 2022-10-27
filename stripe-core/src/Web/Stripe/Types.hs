@@ -127,6 +127,44 @@ newtype StatementDescription =
 instance FromJSON StatementDescription where
   parseJSON v = StatementDescription <$> parseJSON v
 
+
+---
+
+newtype PaymentIntentId
+  = PaymentIntentId Text
+  deriving (Read, Show, Eq, Ord, Data, Typeable)
+
+instance FromJSON PaymentIntentId where
+  parseJSON (String x) = pure $ PaymentIntentId x
+  parseJSON _ = mempty
+
+data PaymentIntent = PaymentIntent {
+    paymentIntentId        :: PaymentIntentId
+  } deriving (Read, Show, Eq, Ord, Data, Typeable)
+
+instance FromJSON PaymentIntent where
+  parseJSON (Object o) = PaymentIntent <$> o .: "id"
+  parseJSON _ = mempty
+
+---
+
+newtype CheckoutSessionId = CheckoutSessionId Text
+  deriving (Read, Show, Eq, Ord, Data, Typeable)
+
+instance FromJSON CheckoutSessionId where
+  parseJSON (String x) = pure $ CheckoutSessionId x
+  parseJSON _ = mzero
+
+data CheckoutSession = CheckoutSession {
+    checkoutSessionId                :: CheckoutSessionId
+  , checkoutSessionClientReferenceId :: Maybe Text
+  } deriving (Read, Show, Eq, Ord, Data, Typeable)
+
+instance FromJSON CheckoutSession where
+  parseJSON (Object o) =
+    CheckoutSession <$> o .: "id"
+                    <*> o .: "client_reference_id"
+
 ------------------------------------------------------------------------------
 -- | `Charge` object in `Stripe` API
 data Charge = Charge {
@@ -1695,6 +1733,7 @@ data EventType =
   | ChargeDisputeClosedEvent
   | ChargeDisputeFundsWithdrawnEvent
   | ChargeDisputeFundsReinstatedEvent
+  | CheckoutSessionCompleted
   | CustomerCreatedEvent
   | CustomerUpdatedEvent
   | CustomerDeletedEvent
@@ -1715,6 +1754,8 @@ data EventType =
   | InvoiceItemCreatedEvent
   | InvoiceItemUpdatedEvent
   | InvoiceItemDeletedEvent
+  | PaymentIntentCreated
+  | PaymentIntentSucceeded
   | PlanCreatedEvent
   | PlanUpdatedEvent
   | PlanDeletedEvent
@@ -1751,6 +1792,7 @@ instance FromJSON EventType where
    parseJSON (String "charge.dispute.closed") = pure ChargeDisputeClosedEvent
    parseJSON (String "charge.dispute.funds_withdrawn") = pure ChargeDisputeFundsWithdrawnEvent
    parseJSON (String "charge.dispute.funds_reinstated") = pure ChargeDisputeFundsReinstatedEvent
+   parseJSON (String "checkout.session.completed") = pure CheckoutSessionCompleted
    parseJSON (String "customer.created") = pure CustomerCreatedEvent
    parseJSON (String "customer.updated") = pure CustomerUpdatedEvent
    parseJSON (String "customer.deleted") = pure CustomerDeletedEvent
@@ -1770,6 +1812,8 @@ instance FromJSON EventType where
    parseJSON (String "invoiceitem.created") = pure InvoiceItemCreatedEvent
    parseJSON (String "invoiceitem.updated") = pure InvoiceItemUpdatedEvent
    parseJSON (String "invoiceitem.deleted") = pure InvoiceItemDeletedEvent
+   parseJSON (String "payment_intent.created") = pure PaymentIntentCreated
+   parseJSON (String "payment_intent.succeeded") = pure PaymentIntentSucceeded
    parseJSON (String "plan.created") = pure PlanCreatedEvent
    parseJSON (String "plan.updated") = pure PlanUpdatedEvent
    parseJSON (String "plan.deleted") = pure PlanDeletedEvent
@@ -1804,12 +1848,14 @@ data EventData =
   | CouponEvent Coupon
   | BalanceEvent Balance
   | ChargeEvent Charge
+  | CheckoutSessionEvent CheckoutSession
   | DisputeEvent Dispute
   | CustomerEvent Customer
   | CardEvent Card
   | SubscriptionEvent Subscription
   | DiscountEvent Discount
   | InvoiceItemEvent InvoiceItem
+  | PaymentIntentEvent PaymentIntent
   | UnknownEventData
   | Ping
   deriving (Read, Show, Eq, Ord, Data, Typeable)
@@ -1868,6 +1914,7 @@ instance FromJSON Event where
         "charge.dispute.closed" -> DisputeEvent <$> obj .: "object"
         "charge.dispute.funds_withdrawn" -> DisputeEvent <$> obj .: "object"
         "charge.dispute.funds_reinstated" -> DisputeEvent <$> obj .: "object"
+        "checkout.session.completed" -> CheckoutSessionEvent <$> obj .: "object"
         "customer.created" -> CustomerEvent <$> obj .: "object"
         "customer.updated" -> CustomerEvent <$> obj .: "object"
         "customer.deleted" -> CustomerEvent <$> obj .: "object"
@@ -1888,6 +1935,8 @@ instance FromJSON Event where
         "invoiceitem.created" -> InvoiceItemEvent <$> obj .: "object"
         "invoiceitem.updated" -> InvoiceItemEvent <$> obj .: "object"
         "invoiceitem.deleted" -> InvoiceItemEvent <$> obj .: "object"
+        "payment_intent.created" -> PaymentIntentEvent <$> obj .: "object"
+        "payment_intent.succeeded" -> PaymentIntentEvent <$> obj .: "object"
         "plan.created" -> PlanEvent <$> obj .: "object"
         "plan.updated" -> PlanEvent <$> obj .: "object"
         "plan.deleted" -> PlanEvent <$> obj .: "object"
