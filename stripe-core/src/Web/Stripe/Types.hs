@@ -325,10 +325,18 @@ instance FromJSON Customer where
            <*> o .: "delinquent"
            <*> o .:? "subscriptions"
            <*> o .:? "discount"
-           <*> o .: "account_balance"
-           <*> o .: "cards"
+           -- Renamed from account_balance to balance in 2019-10-17
+           -- https://stripe.com/docs/upgrades#2019-10-17
+           <*> o .: "balance"
+           -- Replaced by "sources" in 2015-02-18
+           -- https://stripe.com/docs/upgrades#2015-02-18
+           -- <*> o .: "cards"
+           <*> pure (StripeList [] "" "" Nothing False)
            <*> o .:? "currency"
-           <*> o .:? "default_card"
+           -- Replaced by "default_source" in 2015-02-18
+           -- https://stripe.com/docs/upgrades#2015-02-18
+           <*> pure Nothing
+           -- <*> o .:? "default_card"
            <*> o .: "metadata")
   parseJSON o = typeMismatch "Customer" o
 
